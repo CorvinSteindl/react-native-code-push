@@ -146,9 +146,7 @@ public class CodePush implements ReactPackage {
         return null;
     }
 
-    private boolean checkLiveReloadEnable(ReactInstanceManager instanceManager) {
-        boolean isLiveReloadEnabled = false;
-
+    private boolean isLiveReloadEnabled(ReactInstanceManager instanceManager) {
         // Use instanceManager for checking if we use LiveReload mode. In this case we should not remove ReactNativeDevBundle.js file
         // because we get error with trying to get this after reloading. Issue: https://github.com/Microsoft/react-native-code-push/issues/1272
         if (instanceManager != null) {
@@ -158,19 +156,18 @@ public class CodePush implements ReactPackage {
                 Method[] methods = devInternalSettings.getClass().getMethods();
                 for (Method m : methods) {
                     if (m.getName().equals("isReloadOnJSChangeEnabled")) {
-                        try{
-                        isLiveReloadEnabled = (boolean) m.invoke(devInternalSettings);
-                        break;
-                        } catch (Exception x) {}
+                        try {
+                            return (boolean) m.invoke(devInternalSettings);
+                        } catch (Exception x) { }
                     }
                 }
             }
         }
-        return isLiveReloadEnabled;
+        return false;
     }
 
     public void clearDebugCacheIfNeeded(ReactInstanceManager instanceManager) {
-        if (mIsDebugMode && mSettingsManager.isPendingUpdate(null) && !checkLiveReloadEnable(instanceManager)) {
+        if (mIsDebugMode && mSettingsManager.isPendingUpdate(null) && !isLiveReloadEnabled(instanceManager)) {
             // This needs to be kept in sync with https://github.com/facebook/react-native/blob/master/ReactAndroid/src/main/java/com/facebook/react/devsupport/DevSupportManager.java#L78
             File cachedDevBundle = new File(mContext.getFilesDir(), "ReactNativeDevBundle.js");
             if (cachedDevBundle.exists()) {
